@@ -53,3 +53,7 @@ jobs:
 
       - name: Build Next.js app
         run: npm run build
+
+      # ✅ ADD THIS STEP
+      - name: Build Docker image
+        run: docker build -t social-connect:latest .
