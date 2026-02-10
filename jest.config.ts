@@ -3,11 +3,18 @@ import type { Config } from 'jest'
 const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['**/test/**/*.e2e.spec.ts'],
+
+  testMatch: [
+    '**/test/**/*.e2e.spec.ts',
+    '**/test/**/*.perf.spec.ts',   // 👈 NEW
+  ],
+
   setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
+
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+
   testTimeout: 30000,
 }
 
