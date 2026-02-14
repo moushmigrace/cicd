@@ -1,0 +1,6 @@
+instance_type = "t3.micro"
+key_name      = "your-key"instance_type   = "t3.micro"
+key_name        = "your-key"
+github_username = "your-github-username"
+github_token    = "your-ghcr-token"
+repo            = "social-connect"
