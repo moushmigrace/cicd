@@ -1,0 +1,56 @@
+name: Destroy Ephemeral EC2
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+
+  destroy:
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
+    env:
+      BRANCH_NAME: ${{ github.head_ref }}
+      SAFE_BRANCH: ${{ github.ref_name }}
+
+    steps:
+
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ap-south-1
+
+      # Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # Terraform Init
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init
+
+      # Terraform Destroy ephemeral EC2 instance
+      - name: Terraform Destroy EC2
+        run: |
+          cd terraform
+          terraform destroy \
+            -var-file=environments/ephemeral/terraform.tfvars \
+            -var="env_name=${BRANCH_NAME}" \
+            -var="image_tag=${BRANCH_NAME}" \
+            -var="github_username=${{ github.actor }}" \
+            -var="github_token=${{ secrets.GHCR_TOKEN }}" \
+            -auto-approve

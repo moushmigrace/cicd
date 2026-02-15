@@ -1,0 +1,70 @@
+name: Deploy Dev EC2
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Login to GitHub Container Registry
+      - name: Login to GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # Build Docker image
+      - name: Build Docker image
+        run: docker build -t ghcr.io/${{ github.repository }}:dev .
+
+      # Push Docker image
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository }}:dev
+
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ap-south-1
+
+      # Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # Terraform Init
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init
+
+      # Terraform Apply Dev
+      - name: Terraform Apply Dev
+        run: |
+          cd terraform
+          terraform apply \
+            -var-file=environments/dev/terraform.tfvars \
+            -var="env_name=dev" \
+            -var="image_tag=dev" \
+            -var="github_username=${{ github.actor }}" \
+            -var="github_token=${{ secrets.GHCR_TOKEN }}" \
+            -auto-approve
+
+      # Show EC2 Public IP
+      - name: Show EC2 Public IP
+        run: |
+          cd terraform
+          terraform output public_ip
