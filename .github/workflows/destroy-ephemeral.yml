@@ -13,17 +13,16 @@ jobs:
 
     permissions:
       contents: read
-      packages: read
-
-    env:
-      BRANCH_NAME: ${{ github.head_ref }}
-      SAFE_BRANCH: ${{ github.ref_name }}
 
     steps:
 
-      # Checkout repository
+      # Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # Set safe branch name (same as deploy)
+      - name: Set safe branch name
+        run: echo "SAFE_BRANCH=${GITHUB_HEAD_REF//\//-}" >> $GITHUB_ENV
 
       # Configure AWS credentials
       - name: Configure AWS credentials
@@ -43,14 +42,14 @@ jobs:
           cd terraform
           terraform init
 
-      # Terraform Destroy ephemeral EC2 instance
+      # Terraform Destroy
       - name: Terraform Destroy EC2
         run: |
           cd terraform
           terraform destroy \
             -var-file=environments/ephemeral/terraform.tfvars \
-            -var="env_name=${BRANCH_NAME}" \
-            -var="image_tag=${BRANCH_NAME}" \
+            -var="env_name=${{ env.SAFE_BRANCH }}" \
+            -var="image_tag=${{ env.SAFE_BRANCH }}" \
             -var="github_username=${{ github.actor }}" \
             -var="github_token=${{ secrets.GHCR_TOKEN }}" \
             -auto-approve

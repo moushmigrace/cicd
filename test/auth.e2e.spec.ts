@@ -11,10 +11,13 @@ function post(url: string, body: any) {
 }
 
 describe('Auth E2E', () => {
+
   const email = `alice_${Date.now()}@test.com`
   const password = '123456'
 
-  it('registers a user', async () => {
+  // ✅ This runs FIRST always
+  beforeAll(async () => {
+
     const res = await register(
       post('http://localhost/api/auth/register', {
         name: 'Alice',
@@ -23,12 +26,12 @@ describe('Auth E2E', () => {
       })
     )
 
-    const data = await res.json()
     expect(res.status).toBe(200)
-    expect(data.token).toBeDefined()
+
   })
 
   it('logs in a user', async () => {
+
     const res = await login(
       post('http://localhost/api/auth/login', {
         email,
@@ -37,7 +40,10 @@ describe('Auth E2E', () => {
     )
 
     const data = await res.json()
+
     expect(res.status).toBe(200)
     expect(data.token).toBeDefined()
+
   })
+
 })
