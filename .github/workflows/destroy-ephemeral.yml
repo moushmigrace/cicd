@@ -6,7 +6,6 @@ on:
       - closed
 
 jobs:
-
   destroy:
 
     runs-on: ubuntu-latest
@@ -16,15 +15,12 @@ jobs:
 
     steps:
 
-      # Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Set safe branch name (same as deploy)
       - name: Set safe branch name
         run: echo "SAFE_BRANCH=${GITHUB_HEAD_REF//\//-}" >> $GITHUB_ENV
 
-      # Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -32,17 +28,17 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: ap-south-1
 
-      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # Terraform Init
       - name: Terraform Init
         run: |
           cd terraform
-          terraform init
+          terraform init \
+            -backend-config="bucket=social-connect-terraform-state" \
+            -backend-config="key=ephemeral/${{ env.SAFE_BRANCH }}.tfstate" \
+            -backend-config="region=ap-south-1"
 
-      # Terraform Destroy
       - name: Terraform Destroy EC2
         run: |
           cd terraform
