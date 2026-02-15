@@ -24,17 +24,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Convert branch name to safe Docker tag
+      - name: Set safe branch name
+        run: echo "SAFE_BRANCH=${GITHUB_REF_NAME//\//-}" >> $GITHUB_ENV
+
       # Login to GitHub Container Registry
       - name: Login to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       # Build Docker image
       - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository }}:${{ env.BRANCH_NAME }} .
+        run: docker build -t ghcr.io/${{ github.repository }}:${{ env.SAFE_BRANCH }} .
 
       # Push Docker image
       - name: Push Docker image
-        run: docker push ghcr.io/${{ github.repository }}:${{ env.BRANCH_NAME }}
+        run: docker push ghcr.io/${{ github.repository }}:${{ env.SAFE_BRANCH }}
 
       # Configure AWS credentials
       - name: Configure AWS credentials
@@ -60,13 +64,13 @@ jobs:
           cd terraform
           terraform apply \
             -var-file=environments/ephemeral/terraform.tfvars \
-            -var="env_name=${{ env.BRANCH_NAME }}" \
-            -var="image_tag=${{ env.BRANCH_NAME }}" \
+            -var="env_name=${{ env.SAFE_BRANCH }}" \
+            -var="image_tag=${{ env.SAFE_BRANCH }}" \
             -var="github_username=${{ github.actor }}" \
             -var="github_token=${{ secrets.GHCR_TOKEN }}" \
             -auto-approve
 
-      # Show public IP
+      # Show EC2 Public IP
       - name: Show EC2 Public IP
         run: |
           cd terraform
