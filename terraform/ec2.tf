@@ -1,16 +1,29 @@
-user_data = <<-EOF
-#!/bin/bash
+resource "aws_instance" "app" {
 
-apt update -y
-apt install docker.io -y
+  ami           = "ami-0f58b397bc5c1f2e8" # Ubuntu 22.04 ap-south-1
+  instance_type = var.instance_type
+  key_name      = var.key_name
 
-systemctl start docker
-systemctl enable docker
+  vpc_security_group_ids = [aws_security_group.app_sg.id]
 
-echo "${var.github_token}" | docker login ghcr.io -u ${var.github_username} --password-stdin
+  tags = {
+    Name = "social-connect-${var.env_name}"
+  }
 
-docker pull ghcr.io/${var.github_username}/${var.repo}:${var.image_tag}
+  user_data = <<-EOF
+              #!/bin/bash
+              apt update -y
+              apt install -y docker.io
 
-docker run -d -p 3000:3000 ghcr.io/${var.github_username}/${var.repo}:${var.image_tag}
+              systemctl start docker
+              systemctl enable docker
 
-EOF
+              echo "${var.github_token}" | docker login ghcr.io -u ${var.github_username} --password-stdin
+
+              docker pull ghcr.io/${var.github_username}/${var.repo}:${var.image_tag}
+
+              docker run -d -p 3000:3000 ghcr.io/${var.github_username}/${var.repo}:${var.image_tag}
+
+              EOF
+
+}

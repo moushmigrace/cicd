@@ -17,6 +17,7 @@ jobs:
 
     env:
       BRANCH_NAME: ${{ github.head_ref }}
+      SAFE_BRANCH: ${{ github.ref_name }}
 
     steps:
 
